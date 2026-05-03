@@ -1,0 +1,86 @@
+import tkinter as tk
+from PIL import Image, ImageTk
+import time
+from utils import *
+import platforms
+knight_states = {}
+keys_pressed = set()
+inertia = 0
+gravity = 0.1
+last_direction = ''
+x_pos = 0
+y_pos = 0
+def setup_player(m: tk.Tk, c: tk.Canvas, x: float, y: float):
+    global master, canvas, knight, x_pos, y_pos
+    master = m
+    canvas = c
+    img = Image.open('assets/knight.png').convert('RGBA')
+    knight_states['idle'] = [
+        ImageTk.PhotoImage(img.crop((9,9,9+13,9+19)).resize((13*4,19*4),Image.Resampling.NEAREST)),
+        ImageTk.PhotoImage(img.crop((73,10,73+13,10+18)).resize((13*4,19*4),Image.Resampling.NEAREST)),
+        ImageTk.PhotoImage(img.crop((105,10,105+13,10+18)).resize((13*4,19*4),Image.Resampling.NEAREST)),
+        ImageTk.PhotoImage(img.crop((9,9,9+13,9+19)).resize((13*4,19*4),Image.Resampling.NEAREST).transpose(Image.Transpose.FLIP_LEFT_RIGHT)),
+        ImageTk.PhotoImage(img.crop((73,10,73+13,10+18)).resize((13*4,19*4),Image.Resampling.NEAREST).transpose(Image.Transpose.FLIP_LEFT_RIGHT)),
+        ImageTk.PhotoImage(img.crop((105,10,105+13,10+18)).resize((13*4,19*4),Image.Resampling.NEAREST).transpose(Image.Transpose.FLIP_LEFT_RIGHT))
+        ]
+    knight_states['move'] = [
+        #if we recompute instead we get blinking frames, my guess is python's garbage collector
+        #because tkinter holds references
+        ImageTk.PhotoImage(img.crop((8,74,8+14,74+18)).resize((14*4,18*4),Image.Resampling.NEAREST)),
+        ImageTk.PhotoImage(img.crop((41,74,41+13,74+18)).resize((14*4,18*4),Image.Resampling.NEAREST)),
+        ImageTk.PhotoImage(img.crop((201,74,201+13,74+18)).resize((14*4,18*4),Image.Resampling.NEAREST)),
+        ImageTk.PhotoImage(img.crop((8,74,8+14,74+18)).resize((14*4,18*4),Image.Resampling.NEAREST).transpose(Image.Transpose.FLIP_LEFT_RIGHT)),
+        ImageTk.PhotoImage(img.crop((41,74,41+13,74+18)).resize((14*4,18*4),Image.Resampling.NEAREST).transpose(Image.Transpose.FLIP_LEFT_RIGHT)),
+        ImageTk.PhotoImage(img.crop((201,74,201+13,74+18)).resize((14*4,18*4),Image.Resampling.NEAREST).transpose(Image.Transpose.FLIP_LEFT_RIGHT)),
+        ]
+    knight = canvas.create_image(100,100,image=knight_states['idle'][0],anchor='nw')
+    x_pos, y_pos = canvas.coords(knight)
+    # knight = tk.Label(master,image=knight_states['idle'][0])
+
+def clock():
+    global inertia,gravity,x_pos,y_pos
+    # change sprite every half a second
+    ts = int(time.time()*10)
+    move_index = ts%3
+    block_y = platforms.collision_top(x_pos,y_pos+gravity)
+    if block_y[0]:
+        print('asd')
+        gravity = 0
+        canvas.move(knight,0,block_y[1])
+    if 'a' in keys_pressed:
+        inertia-=0.3
+        canvas.itemconfigure(knight,image=knight_states['move'][move_index+3])
+    if 'd' in keys_pressed:
+        inertia+=0.3
+        canvas.itemconfigure(knight,image=knight_states['move'][move_index])
+    if 'space' in keys_pressed and can_jump(x_pos,y_pos):
+        gravity = -9
+    else:
+        if last_direction == 'd':
+            canvas.itemconfigure(knight,image=knight_states['idle'][move_index])
+        else:
+            canvas.itemconfigure(knight,image=knight_states['idle'][move_index+3])
+    if platforms.collision_size(x_pos+inertia,y_pos):
+        inertia = 0
+    inertia = round(inertia,2)
+    y_pos = min(y_pos+gravity,720-19*6)
+    x_pos = clamp(x_pos+inertia,0,980-13*4)
+    print(x_pos,inertia)
+    canvas.coords(knight,x_pos,y_pos)
+    if inertia > 0: inertia-=0.1
+    elif inertia < 0: inertia+=0.1
+    if y_pos < 720:
+        gravity+=0.4
+    inertia = clamp(inertia,-5,5) #speed cap
+    gravity = min(gravity,15) #terminal velocity
+    master.after(16,clock)
+
+def on_key_press(e: tk.Event[tk.Misc]):
+    global last_direction
+    key = e.keysym
+    if key in ('a','d'): last_direction = key
+    keys_pressed.add(key)
+def on_key_release(e: tk.Event[tk.Misc]):
+    key = e.keysym
+    if key in keys_pressed:
+        keys_pressed.remove(key)
