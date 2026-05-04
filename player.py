@@ -2,6 +2,7 @@ import tkinter as tk
 from PIL import Image, ImageTk
 import time
 import ghost
+import ladder
 import slime
 from utils import *
 import platforms
@@ -44,6 +45,7 @@ def clock():
     # change sprite every half a second
     ts = int(time.time()*10)
     move_index = ts%3
+    is_in_ladder = ladder.collides_with_ladder(knight)
     if platforms.collision_top(knight,gravity): 
         gravity = 0
     if 'a' in keys_pressed:
@@ -52,6 +54,10 @@ def clock():
     if 'd' in keys_pressed:
         inertia+=0.3
         canvas.itemconfigure(knight,image=knight_states[1][move_index])
+    if 'w' in keys_pressed and is_in_ladder:
+        gravity = -1
+    if 's' in keys_pressed and is_in_ladder:
+        gravity = 1
     if 'space' in keys_pressed and can_jump(x_pos,y_pos,knight):
         gravity = -9
     if not 'a' in keys_pressed and not 'd' in keys_pressed:
@@ -69,7 +75,8 @@ def clock():
     canvas.coords(knight,x_pos,y_pos)
     if inertia > 0: inertia-=0.1
     elif inertia < 0: inertia+=0.1
-    gravity+=0.4
+    if is_in_ladder and ('w' in keys_pressed or 's' in keys_pressed): gravity = 0
+    else: gravity+=0.4
     inertia = clamp(inertia,-5,5) #speed cap
     gravity = min(gravity,15) #terminal velocity
     if collides_with_enemy():

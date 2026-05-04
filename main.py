@@ -1,4 +1,5 @@
 import tkinter as tk
+import ladder
 import player, platforms, slime, ghost
 master = tk.Tk()
 master.geometry('980x720')
@@ -19,6 +20,8 @@ slime.create_slime(600,400)
 slime.create_slime(600,200)
 ghost.setup_ghost(master,canvas,knight)
 ghost.create_ghost(0,0)
+ladder.setup_ladder(master,canvas)
+ladder.place_ladder(400,400)
 ghost.clock()
 slime.clock()
 player.clock()
