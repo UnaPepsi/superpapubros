@@ -18,19 +18,18 @@ def collission_bottom(obj_id: int, to_y: float) -> bool:
     return len([block for block in blocks if block in collides]) != 0
 def collision_top(obj_id: int, to_y: float) -> bool:
     coords = list(canvas.bbox(obj_id))
-    # coords[3]+=to_y+12 #type: ignore
     coords[1] = coords[3] #type: ignore
     coords[3] += to_y #type: ignore
     collides = list(canvas.find_overlapping(*coords))
     if obj_id in collides: collides.remove(obj_id)
     return len([block for block in blocks if block in collides]) != 0
-def collision_side(obj_id: int,to_x: float) -> bool:
+def collision_side(obj_id: int,to_x: float, offset: float) -> bool:
     coords = list(canvas.bbox(obj_id))
     coords[0]+=to_x #type: ignore
     coords[2]+=to_x #type: ignore
-    coords[1]+=12 #knight's red thingy idk offset
+    coords[1]+=offset #type: ignore #knight's red thingy idk offset
     collides = list(canvas.find_overlapping(*coords))
-    collides.remove(obj_id)
+    if obj_id in collides: collides.remove(obj_id)
     return len([block for block in blocks if block in collides]) != 0
 def create_block(x: float, y: float):
     block = canvas.create_image(x,y,image=img)

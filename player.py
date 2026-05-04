@@ -1,29 +1,31 @@
 import tkinter as tk
 from PIL import Image, ImageTk
 import time
+import ghost
+import slime
 from utils import *
 import platforms
-knight_states = {}
+knight_states = []
 keys_pressed = set()
 inertia = 0
 gravity = 0.1
 last_direction = ''
 x_pos = 0
 y_pos = 0
-def setup_player(m: tk.Tk, c: tk.Canvas, x: float, y: float):
+def setup_player(m: tk.Tk, c: tk.Canvas, x: float, y: float) -> int:
     global master, canvas, knight, x_pos, y_pos
     master = m
     canvas = c
     img = Image.open('assets/knight.png').convert('RGBA')
-    knight_states['idle'] = [
+    knight_states.append([
         ImageTk.PhotoImage(img.crop((9,9,9+13,9+19)).resize((13*4,19*4),Image.Resampling.NEAREST)),
         ImageTk.PhotoImage(img.crop((73,10,73+13,10+18)).resize((13*4,19*4),Image.Resampling.NEAREST)),
         ImageTk.PhotoImage(img.crop((105,10,105+13,10+18)).resize((13*4,19*4),Image.Resampling.NEAREST)),
         ImageTk.PhotoImage(img.crop((9,9,9+13,9+19)).resize((13*4,19*4),Image.Resampling.NEAREST).transpose(Image.Transpose.FLIP_LEFT_RIGHT)),
         ImageTk.PhotoImage(img.crop((73,10,73+13,10+18)).resize((13*4,19*4),Image.Resampling.NEAREST).transpose(Image.Transpose.FLIP_LEFT_RIGHT)),
         ImageTk.PhotoImage(img.crop((105,10,105+13,10+18)).resize((13*4,19*4),Image.Resampling.NEAREST).transpose(Image.Transpose.FLIP_LEFT_RIGHT))
-        ]
-    knight_states['move'] = [
+        ])
+    knight_states.append([
         #if we recompute instead we get blinking frames, my guess is python's garbage collector
         #because tkinter holds references
         ImageTk.PhotoImage(img.crop((8,74,8+14,74+18)).resize((14*4,18*4),Image.Resampling.NEAREST)),
@@ -32,13 +34,13 @@ def setup_player(m: tk.Tk, c: tk.Canvas, x: float, y: float):
         ImageTk.PhotoImage(img.crop((8,74,8+14,74+18)).resize((14*4,18*4),Image.Resampling.NEAREST).transpose(Image.Transpose.FLIP_LEFT_RIGHT)),
         ImageTk.PhotoImage(img.crop((41,74,41+13,74+18)).resize((14*4,18*4),Image.Resampling.NEAREST).transpose(Image.Transpose.FLIP_LEFT_RIGHT)),
         ImageTk.PhotoImage(img.crop((201,74,201+13,74+18)).resize((14*4,18*4),Image.Resampling.NEAREST).transpose(Image.Transpose.FLIP_LEFT_RIGHT)),
-        ]
-    knight = canvas.create_image(x,y,image=knight_states['idle'][0],anchor='nw')
+        ])
+    knight = canvas.create_image(x,y,image=knight_states[0][0],anchor='nw')
     x_pos, y_pos = canvas.coords(knight)
+    return knight
 
 def clock():
     global inertia,gravity,x_pos,y_pos
-    print(gravity)
     # change sprite every half a second
     ts = int(time.time()*10)
     move_index = ts%3
@@ -46,18 +48,18 @@ def clock():
         gravity = 0
     if 'a' in keys_pressed:
         inertia-=0.3
-        canvas.itemconfigure(knight,image=knight_states['move'][move_index+3])
+        canvas.itemconfigure(knight,image=knight_states[1][move_index+3])
     if 'd' in keys_pressed:
         inertia+=0.3
-        canvas.itemconfigure(knight,image=knight_states['move'][move_index])
+        canvas.itemconfigure(knight,image=knight_states[1][move_index])
     if 'space' in keys_pressed and can_jump(x_pos,y_pos,knight):
         gravity = -9
     if not 'a' in keys_pressed and not 'd' in keys_pressed:
         if last_direction == 'd':
-            canvas.itemconfigure(knight,image=knight_states['idle'][move_index])
+            canvas.itemconfigure(knight,image=knight_states[0][move_index])
         else:
-            canvas.itemconfigure(knight,image=knight_states['idle'][move_index+3])
-    if platforms.collision_side(knight,inertia):
+            canvas.itemconfigure(knight,image=knight_states[0][move_index+3])
+    if platforms.collision_side(knight,inertia,12):
         inertia = 0
     if platforms.collission_bottom(knight,gravity):
         gravity = 0
@@ -70,6 +72,8 @@ def clock():
     gravity+=0.4
     inertia = clamp(inertia,-5,5) #speed cap
     gravity = min(gravity,15) #terminal velocity
+    if collides_with_enemy():
+        kill()
     master.after(16,clock)
 
 def on_key_press(e: tk.Event[tk.Misc]):
@@ -81,3 +85,11 @@ def on_key_release(e: tk.Event[tk.Misc]):
     key = e.keysym
     if key in keys_pressed:
         keys_pressed.remove(key)
+
+def collides_with_enemy() -> bool:
+    bbox = canvas.bbox(knight)
+    collissions = canvas.find_overlapping(*bbox)
+    return len([x for x in slime.slimes+ghost.ghosts if x[0] in collissions]) != 0
+
+def kill():
+    print('ded')

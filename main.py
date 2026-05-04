@@ -1,5 +1,5 @@
 import tkinter as tk
-import player, platforms
+import player, platforms, slime, ghost
 master = tk.Tk()
 master.geometry('980x720')
 canvas = tk.Canvas(master,bg='red')
@@ -7,9 +7,19 @@ canvas.pack(fill='both',expand=True)
 
 master.bind('<KeyPress>',player.on_key_press)
 master.bind('<KeyRelease>',player.on_key_release)
-player.setup_player(master,canvas,0,0)
+knight = player.setup_player(master,canvas,0,0)
 platforms.setup(master,canvas)
 platforms.create_block(200,600)
+platforms.create_block(800,600)
 platforms.create_block(500,550)
+slime.setup_slime(master,canvas,knight)
+slime.create_slime(600,600)
+slime.create_slime(600,500)
+slime.create_slime(600,400)
+slime.create_slime(600,200)
+ghost.setup_ghost(master,canvas,knight)
+ghost.create_ghost(0,0)
+ghost.clock()
+slime.clock()
 player.clock()
 master.mainloop()
