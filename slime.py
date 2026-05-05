@@ -50,7 +50,12 @@ def clock():
                 slimes[i][1] /= aggro_speed
                 slimes_aggro.remove(slime)
             canvas.itemconfigure(slime,image=idling[idle_index])
-        if platforms.collision_side(slime,slimes[i][1],0):
+        #offset cuz slime grows when agro
+        #other offset to add slime's velocity. without this slime may move to illegal spot then get stuck
+        #last or just borders
+        if platforms.collision_side(slime,slimes[i][1],-1,-15) \
+                or (not platforms.collision_top(slime,15,slimes[i][1]) and y < 720-15*4) \
+                or x+slimes[i][1] <= 0 or x+slimes[i][1] >= 980:
             slimes[i][1] *= -1
         canvas.move(slime,slimes[i][1],0)
     master.after(16,clock)

@@ -38,6 +38,8 @@ def setup_player(m: tk.Tk, c: tk.Canvas, x: float, y: float) -> int:
         ])
     knight = canvas.create_image(x,y,image=knight_states[0][0],anchor='nw')
     x_pos, y_pos = canvas.coords(knight)
+    master.bind('<KeyPress>',on_key_press)
+    master.bind('<KeyRelease>',on_key_release)
     return knight
 
 def clock():
