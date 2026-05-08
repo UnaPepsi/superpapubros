@@ -5,13 +5,13 @@ import platforms
 
 slimes = []
 slimes_aggro = []
+img = Image.open('assets/slime_green.png')
 
 def setup_slime(m: tk.Tk, c: tk.Canvas, knight_id: int):
     global master, canvas, idling, aggro, knight
     master = m
     canvas = c
     knight = knight_id
-    img = Image.open('assets/slime_green.png')
     idling = [
             ImageTk.PhotoImage(img.crop((5,15,5+14,15+9)).resize((14*4,9*4),Image.Resampling.NEAREST)),
             ImageTk.PhotoImage(img.crop((29,14,29+14,14+10)).resize((14*4,10*4),Image.Resampling.NEAREST)),
@@ -51,13 +51,17 @@ def clock():
                 slimes_aggro.remove(slime)
             canvas.itemconfigure(slime,image=idling[idle_index])
         #offset cuz slime grows when agro
+        coll_side = platforms.collision_side(slime,slimes[i][1],-1,-15)
         #other offset to add slime's velocity. without this slime may move to illegal spot then get stuck
+        coll_top = platforms.collision_top(slime,15,slimes[i][1])
         #last or just borders
-        if platforms.collision_side(slime,slimes[i][1],-1,-15) \
-                or (not platforms.collision_top(slime,15,slimes[i][1]) and y < 720-15*4) \
+        if coll_side or (not coll_top and y < 720-15*4) \
                 or x+slimes[i][1] <= 0 or x+slimes[i][1] >= 980:
             slimes[i][1] *= -1
-        canvas.move(slime,slimes[i][1],0)
+        #if slime spawns on the air, let it fall until it hits a platform
+        if coll_top:
+            canvas.coords(slime,x,coll_top)
+        canvas.move(slime,slimes[i][1],2)
     master.after(16,clock)
 
 def create_slime(x: float, y: float):

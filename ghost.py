@@ -3,12 +3,12 @@ from PIL import Image, ImageTk
 import tkinter as tk
 
 ghosts = []
+img = Image.open('assets/MiniGhost_Idle.png')
 
 def setup_ghost(m: tk.Tk, c: tk.Canvas, knight_id: int):
     global master, canvas, states, knight
     master = m
     canvas = c
-    img = Image.open('assets/MiniGhost_Idle.png')
     states = [
             ImageTk.PhotoImage(img.crop((5,5,5+21,5+25)).resize((21*3,25*3),Image.Resampling.NEAREST)),
             ImageTk.PhotoImage(img.crop((69,3,69+21,3+26)).resize((21*3,26*3),Image.Resampling.NEAREST)),
