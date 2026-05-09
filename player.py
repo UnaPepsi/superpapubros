@@ -1,8 +1,11 @@
 import tkinter as tk
+from tkinter.simpledialog import askstring
+from tkinter import messagebox
 from PIL import Image, ImageTk
 import time
 import ghost
 import ladder
+import menu
 import slime
 from utils import *
 import platforms
@@ -19,9 +22,13 @@ def add_goal(x: int, y: int):
     global goals
     goals.append((x,y))
 def setup_player(m: tk.Tk, c: tk.Canvas, x: float, y: float) -> int:
-    global master, canvas, knight, x_pos, y_pos
+    global master, canvas, knight, x_pos, y_pos, score
+    score = 120 #seconds
     master = m
     canvas = c
+    goals.clear()
+    knight_states.clear()
+    keys_pressed.clear()
     knight_states.append([
         ImageTk.PhotoImage(img.crop((9,9,9+13,9+19)).resize((13*4,19*4),Image.Resampling.NEAREST)),
         ImageTk.PhotoImage(img.crop((73,10,73+13,10+18)).resize((13*4,19*4),Image.Resampling.NEAREST)),
@@ -47,12 +54,17 @@ def setup_player(m: tk.Tk, c: tk.Canvas, x: float, y: float) -> int:
     return knight
 
 def clock():
-    global inertia,gravity,x_pos,y_pos
-    # change sprite every half a second
+    global inertia,gravity,x_pos,y_pos,score
+    score = max(0,score-1/60) #-1 score every second
     if wins():
-        print('yay')
+        menu.setup_menu(master,canvas)
+        while not (username := askstring(title='¡Ganaste!',prompt='Escribe tu username')): ...
+        with open('scores.txt','a') as f:
+            f.write(f'{int(score*1000)},{username}\n') #big number = better :v
+    # change sprite every half a second
     ts = int(time.time()*10)
     move_index = ts%3
+    if not canvas.coords(knight): return
     is_in_ladder = ladder.collides_with_ladder(knight)
     if platforms.collision_top(knight,gravity):
         gravity = 0
@@ -62,18 +74,18 @@ def clock():
     if 'd' in keys_pressed:
         inertia+=0.3
         canvas.itemconfigure(knight,image=knight_states[1][move_index])
-    if 'w' in keys_pressed and is_in_ladder:
+    if 'w' in keys_pressed and is_in_ladder and not 'space' in keys_pressed:
         gravity = -1
-    if 's' in keys_pressed and is_in_ladder:
+    if 's' in keys_pressed and is_in_ladder and not 'space' in keys_pressed:
         gravity = 1
-    if 'space' in keys_pressed and can_jump(x_pos,y_pos,knight):
+    if 'space' in keys_pressed and (can_jump(x_pos,y_pos,knight) or is_in_ladder):
         gravity = -9
     if not 'a' in keys_pressed and not 'd' in keys_pressed:
         if last_direction == 'd':
             canvas.itemconfigure(knight,image=knight_states[0][move_index])
         else:
             canvas.itemconfigure(knight,image=knight_states[0][move_index+3])
-    if platforms.collision_side(knight,inertia,12):
+    if platforms.collision_side(knight,inertia,12,-5):
         inertia = 0
     if platforms.collission_bottom(knight,gravity):
         gravity = 0
@@ -83,13 +95,14 @@ def clock():
     canvas.coords(knight,x_pos,y_pos)
     if inertia > 0: inertia-=0.1
     elif inertia < 0: inertia+=0.1
-    if is_in_ladder and ('w' in keys_pressed or 's' in keys_pressed): gravity = 0
+    if is_in_ladder and (('w' in keys_pressed or 's' in keys_pressed) and not 'space' in keys_pressed): gravity = 0
     else: gravity+=0.4
     inertia = clamp(inertia,-5,5) #speed cap
     gravity = min(gravity,15) #terminal velocity
     if collides_with_enemy():
-        kill()
-    master.after(16,clock)
+        menu.setup_menu(master,canvas)
+        messagebox.showinfo(title='Perdiste :(',message='Perdiste :(\n¡Prueba suerte otra vez!')
+    return master.after(16,clock)
 
 def on_key_press(e: tk.Event[tk.Misc]):
     global last_direction
@@ -109,6 +122,3 @@ def wins() -> bool:
         collissions = canvas.find_overlapping(goal[0],goal[1],goal[0],goal[1])
         if knight in collissions: return True
     return False
-
-def kill():
-    print('ded')

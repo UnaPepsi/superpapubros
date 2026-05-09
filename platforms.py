@@ -19,6 +19,7 @@ def collission_bottom(obj_id: int, to_y: float = 0) -> bool:
 def collision_top(obj_id: int, to_y: float = 0, to_x: float = 0) -> int:
     coords = list(canvas.bbox(obj_id))
     coords[0] += to_x #type: ignore
+    coords[2] += to_x #type: ignore
     coords[1] += to_x #type: ignore
     coords[1] = coords[3] #type: ignore
     coords[3] += to_y #type: ignore

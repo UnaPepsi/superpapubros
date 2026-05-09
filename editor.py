@@ -68,13 +68,16 @@ def snap(x: int, y: int) -> tuple[int,int]:
 
 def place(event: tk.Event[tk.Canvas]):
     if index_selected is None: return
-    #if player already in level
-    for dat in level_dat:
-        if dat[2] == 0 == index_selected: return
     x,y = snap(event.x,event.y)
-    if index_selected == -1: canvas.create_rectangle(x,y,x,y,fill='red',width=20)
-    else: canvas.create_image(x,y,image=buttons_img[index_selected])
-    level_dat.append((x,y,index_selected))
+    for dat in level_dat:
+        #if player already in level
+        if dat[2] == 0 == index_selected: return
+        #if the same item is placed twice
+        if dat[0]==x and dat[1]==y and dat[2] == index_selected: return
+    print('placing',x,y)
+    if index_selected == -1: obj_id = canvas.create_rectangle(x,y,x,y,fill='red',width=20)
+    else: obj_id = canvas.create_image(x,y,image=buttons_img[index_selected])
+    level_dat.append((x,y,index_selected,obj_id))
 
 def remove(event: tk.Event[tk.Canvas]):
     global level_dat
@@ -82,12 +85,8 @@ def remove(event: tk.Event[tk.Canvas]):
     collisions = canvas.find_overlapping(x,y,x,y)
     for collision in collisions:
         if collision == canvas.bg_tag: continue #type: ignore
-        #if coords returns more than 2, unpack the rest nowhere
-        obj_x,obj_y,*_ = canvas.coords(collision)
         canvas.delete(collision)
-        for dat in level_dat.copy():
-            if dat[0]==obj_x and dat[1]==obj_y:
-                level_dat = [x for x in level_dat if x[0]!=obj_x and x[1]!=obj_y]
+        level_dat = list(filter(lambda x: x[-1]!=collision,level_dat))
 
 def save_level():
     name = askstring(title='Guardado',prompt='Escribe el nombre del nivel (solo caracteres alfanuméricos y guiones')

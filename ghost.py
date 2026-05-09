@@ -2,11 +2,11 @@ import time
 from PIL import Image, ImageTk
 import tkinter as tk
 
-ghosts = []
 img = Image.open('assets/MiniGhost_Idle.png')
 
 def setup_ghost(m: tk.Tk, c: tk.Canvas, knight_id: int):
-    global master, canvas, states, knight
+    global master, canvas, states, knight, ghosts
+    ghosts = []
     master = m
     canvas = c
     states = [
@@ -19,7 +19,9 @@ def setup_ghost(m: tk.Tk, c: tk.Canvas, knight_id: int):
 def clock():
     ts = int(time.time()*10)
     move_index = ts%3
-    kx,ky = canvas.coords(knight)
+    coords = canvas.coords(knight)
+    if not coords: return
+    kx,ky = coords
     ky+=19*4 #point to feet
     for ghost in ghosts:
         gh = ghost[0]
@@ -41,7 +43,7 @@ def clock():
         ghost[2]+=steer_y
         canvas.move(gh,ghost[1],ghost[2])
         canvas.itemconfigure(gh,image=states[move_index])
-    master.after(16,clock)
+    return master.after(16,clock)
 
 def create_ghost(x,y):
     ghost = canvas.create_image(x,y,image=states[0])
