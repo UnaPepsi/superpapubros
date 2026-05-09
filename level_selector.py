@@ -9,14 +9,18 @@ import slime
 
 current_level = ''
 callbacks = []
+selector_open = False
 
 def show_levels(m: Tk,c: Canvas):
-    global master, canvas, tl
+    global master, canvas, tl, selector_open
+    if selector_open: return
+    selector_open = True
     master = m
     canvas = c
     tl = Toplevel(m)
     tl.title('Niveles')
     tl.resizable(False,False)
+    tl.protocol("WM_DELETE_WINDOW", lambda : on_close())
     Label(tl,text='Selecciona un nivel').pack()
     lsbox = Listbox(tl)
     lsbox_i = 0
@@ -31,7 +35,8 @@ def show_levels(m: Tk,c: Canvas):
     lsbox.bind('<<ListboxSelect>>',on_select_level)
 
 def on_select_level(e: Event[Listbox]):
-    global current_level
+    global current_level, selector_open
+    selector_open = False
     select = e.widget.curselection()
     if not select: return
     select = int(select[0])
@@ -76,3 +81,9 @@ def countdown(t: int,var: BooleanVar,tid: int | None = None):
     f=Font(canvas,size=50)
     tid = canvas.create_text(980/2,720/2,anchor='center',text=t,font=f)
     canvas.after(333,lambda : countdown(t-1,var,tid))
+
+def on_close():
+    global selector_open
+    master.destroy()
+    selector_open = False
+

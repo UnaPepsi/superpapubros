@@ -88,6 +88,11 @@ def remove(event: tk.Event[tk.Canvas]):
         level_dat = list(filter(lambda x: x[-1]!=collision,level_dat))
 
 def save_level():
+    for dat in level_dat:
+        if dat[2] == 0: break
+    else:
+        messagebox.showerror(message='Debe haber 1 caballero en el mapa')
+        return
     name = askstring(title='Guardado',prompt='Escribe el nombre del nivel (solo caracteres alfanuméricos y guiones')
     if not name: return
     if re.match(r'(?![\w|-])',name):
