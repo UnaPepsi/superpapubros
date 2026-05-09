@@ -1,5 +1,6 @@
-from tkinter import Canvas, Event, Listbox, Tk, Toplevel, Label
+from tkinter import Canvas, Event, Listbox, Tk, Toplevel, Label, BooleanVar
 from os import listdir
+from tkinter.font import Font
 import ghost
 import ladder
 import platforms
@@ -48,7 +49,6 @@ def create_level():
         slime.setup_slime(master,canvas,p_id)
         ghost.setup_ghost(master,canvas,p_id)
         for line in lines:
-            print(line[-1])
             line = list(map(int, line))
             if line[-1] == 1:
                 slime.create_slime(line[0],line[1])
@@ -60,7 +60,19 @@ def create_level():
                 ladder.place_ladder(line[0],line[1])
             elif line[-1] == -1:
                 player.add_goal(line[0],line[1])
+        tl.destroy()
+        a = BooleanVar(canvas,True)
+        countdown(3,a,None)
+        canvas.wait_variable(a)
         callbacks.append(player.clock())
         callbacks.append(slime.clock())
         callbacks.append(ghost.clock())
-    tl.destroy()
+
+def countdown(t: int,var: BooleanVar,tid: int | None = None):
+    if tid is not None:
+        canvas.delete(tid)
+    if t <= 0:
+        return var.set(False)
+    f=Font(canvas,size=50)
+    tid = canvas.create_text(980/2,720/2,anchor='center',text=t,font=f)
+    canvas.after(333,lambda : countdown(t-1,var,tid))

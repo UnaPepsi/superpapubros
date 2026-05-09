@@ -32,7 +32,7 @@ def _make_slime_aggro(slime: int, index: int):
     master.after(125,_make_slime_aggro,slime,index+1)
 
 def clock():
-    aggro_speed = 5
+    aggro_speed = 3
     coords = canvas.coords(knight)
     if not coords: return
     kx,ky = coords

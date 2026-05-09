@@ -74,7 +74,6 @@ def place(event: tk.Event[tk.Canvas]):
         if dat[2] == 0 == index_selected: return
         #if the same item is placed twice
         if dat[0]==x and dat[1]==y and dat[2] == index_selected: return
-    print('placing',x,y)
     if index_selected == -1: obj_id = canvas.create_rectangle(x,y,x,y,fill='red',width=20)
     else: obj_id = canvas.create_image(x,y,image=buttons_img[index_selected])
     level_dat.append((x,y,index_selected,obj_id))
